@@ -1,5 +1,8 @@
 import numpy as np
 from src.evaluate import result_outcome, rps, log_loss, evaluate
+from src.evaluate import (base_rate_probs, rank_baseline_probs,
+                          calibration_curve, walk_forward_worldcups)
+from src.dixon_coles import DixonColesModel
 
 
 def test_result_outcome():
@@ -28,3 +31,32 @@ def test_evaluate_aggregates():
     out = evaluate(preds, outs)
     assert set(out) == {"rps", "log_loss", "accuracy"}
     assert out["accuracy"] == 1.0
+
+
+def test_base_rate_probs_sums_to_one():
+    p = base_rate_probs([0, 0, 1, 2, 0])
+    np.testing.assert_allclose(sum(p), 1.0)
+    assert p[0] > p[2]  # home most common in this sample
+
+
+def test_rank_baseline_favors_better_rank():
+    p = rank_baseline_probs(home_rank=3, away_rank=40)
+    assert p[0] > p[2]
+
+
+def test_calibration_curve_perfect_model():
+    home_probs = [0.1, 0.1, 0.9, 0.9]
+    home_won = [0, 0, 1, 1]
+    centers, freqs = calibration_curve(home_probs, home_won, n_bins=10)
+    assert np.all((freqs >= 0) & (freqs <= 1))
+    assert len(centers) == len(freqs)
+
+
+def test_walk_forward_runs(synthetic_matches):
+    # relabel a slice as a "World Cup" so the loop has a test set
+    m = synthetic_matches.copy()
+    m.loc[m["date"].dt.year == 2015, "tournament"] = "FIFA World Cup"
+    preds, outs = walk_forward_worldcups(
+        m, wc_years=[2015], model_factory=DixonColesModel, xi=0.0)
+    assert len(preds) == len(outs) > 0
+    assert all(abs(sum(p) - 1.0) < 1e-6 for p in preds)
