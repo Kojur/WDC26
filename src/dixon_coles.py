@@ -45,7 +45,16 @@ def _neg_log_likelihood(params, hi, ai, x, y, neutral, weights, n_teams):
 
 
 class DixonColesModel:
-    """Maximum-likelihood Dixon-Coles model with time-decay weighting."""
+    """Maximum-likelihood Dixon-Coles model with time-decay weighting.
+
+    Fitted attributes:
+        attack:  per-team attacking strength (higher => scores more goals).
+        defense: per-team defensive parameter beta (DC 1997). A *more negative*
+                 value means the team concedes fewer goals (stronger defence).
+                 So overall team strength is ``attack - defense``.
+        home_adv: home-advantage term gamma (added to lambda for non-neutral games).
+        rho: low-score correction parameter.
+    """
 
     def __init__(self, max_goals=10):
         self.max_goals = max_goals
@@ -112,6 +121,7 @@ class DixonColesModel:
         mat[0, 1] *= 1.0 + lam * self.rho
         mat[1, 0] *= 1.0 + mu * self.rho
         mat[1, 1] *= 1.0 - self.rho
+        mat = np.clip(mat, 0.0, None)  # guard against negative tau at extreme rho
         return mat / mat.sum()
 
     def predict_result(self, home, away, neutral=True):

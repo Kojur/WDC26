@@ -80,3 +80,34 @@ def test_sampled_mean_favors_strong(fitted_model):
     diffs = [hg - ag for hg, ag in
              (fitted_model.sample_scoreline("Strong", "Weak", rng) for _ in range(2000))]
     assert np.mean(diffs) > 0
+
+
+def test_home_advantage_estimated_positive():
+    import pandas as pd
+    from src.dixon_coles import DixonColesModel
+    rng = np.random.default_rng(3)
+    rows = []
+    # Two equal-strength teams; on non-neutral grounds the home side scores more,
+    # so the effect must be captured by the home-advantage term gamma (> 0).
+    for d in pd.date_range("2018-01-01", periods=400, freq="W"):
+        rows.append({"date": d, "home_team": "A", "away_team": "B",
+                     "home_score": int(rng.poisson(1.8)),
+                     "away_score": int(rng.poisson(0.9)),
+                     "tournament": "Q", "neutral": False})
+    for d in pd.date_range("2018-01-04", periods=400, freq="W"):
+        rows.append({"date": d, "home_team": "B", "away_team": "A",
+                     "home_score": int(rng.poisson(1.8)),
+                     "away_score": int(rng.poisson(0.9)),
+                     "tournament": "Q", "neutral": False})
+    m = DixonColesModel().fit(pd.DataFrame(rows), xi=0.0)
+    assert m.home_adv > 0
+
+
+def test_score_matrix_nonnegative_at_extreme_rho(fitted_model):
+    # With an out-of-range rho the raw tau cells can go negative; score_matrix
+    # must clip so the result is a valid probability distribution and sampling works.
+    fitted_model.rho = 2.0
+    mat = fitted_model.score_matrix("Strong", "Weak", neutral=True)
+    assert mat.min() >= 0.0
+    np.testing.assert_allclose(mat.sum(), 1.0, atol=1e-9)
+    fitted_model.sample_scoreline("Strong", "Weak", np.random.default_rng(0))
