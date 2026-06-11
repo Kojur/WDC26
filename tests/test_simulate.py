@@ -1,6 +1,7 @@
 import numpy as np
 from src.simulate import simulate_group, rank_group
 from src.simulate import select_best_thirds, simulate_knockout_match
+from src.simulate import simulate_tournament, monte_carlo
 
 
 def test_simulate_group_structure(stub_model_factory):
@@ -42,3 +43,34 @@ def test_knockout_favors_stronger_over_many_runs(stub_model_factory):
     wins = sum(simulate_knockout_match("A", "B", model, rng) == "A"
                for _ in range(500))
     assert wins > 250
+
+
+def _toy_groups():
+    # 12 groups of 4 = 48 teams named G{group}{slot}
+    return {chr(65 + g): [f"G{chr(65 + g)}{s}" for s in range(4)]
+            for g in range(12)}
+
+
+def _toy_model(stub_model_factory):
+    teams = [t for g in _toy_groups().values() for t in g]
+    strengths = {t: i / len(teams) for i, t in enumerate(teams)}
+    return stub_model_factory(strengths)
+
+
+def test_simulate_tournament_produces_one_champion(stub_model_factory):
+    model = _toy_model(stub_model_factory)
+    rng = np.random.default_rng(0)
+    reached = simulate_tournament(_toy_groups(), model, rng)
+    assert len(reached) == 48
+    assert sum(1 for s in reached.values() if s == "champion") == 1
+
+
+def test_monte_carlo_probabilities_valid(stub_model_factory):
+    model = _toy_model(stub_model_factory)
+    df = monte_carlo(_toy_groups(), model, n_sims=40, seed=0)
+    assert len(df) == 48
+    for col in ["p_r32", "p_r16", "p_qf", "p_sf", "p_final", "p_champion"]:
+        assert ((df[col] >= 0) & (df[col] <= 1)).all()
+    # cumulative-reach monotonicity: reaching the final implies reaching r16
+    assert (df["p_r16"] >= df["p_final"] - 1e-9).all()
+    np.testing.assert_allclose(df["p_champion"].sum(), 1.0, atol=1e-9)
