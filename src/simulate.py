@@ -29,3 +29,24 @@ def rank_group(standings, rng):
     df["_rand"] = rng.random(len(df))
     df = df.sort_values(["pts", "gd", "gf", "_rand"], ascending=False)
     return df["team"].tolist()
+
+
+def select_best_thirds(third_rows, rng):
+    """Pick the 8 best third-placed teams across the 12 groups."""
+    df = pd.DataFrame(third_rows)
+    df["_rand"] = rng.random(len(df))
+    df = df.sort_values(["pts", "gd", "gf", "_rand"], ascending=False)
+    return df["team"].head(8).tolist()
+
+
+def simulate_knockout_match(home, away, model, rng):
+    """Simulate one knockout match; a draw is resolved by a strength-weighted flip."""
+    hg, ag = model.sample_scoreline(home, away, rng, neutral=True)
+    if hg > ag:
+        return home
+    if ag > hg:
+        return away
+    a_h, _ = model._params(home)
+    a_a, _ = model._params(away)
+    p_home = np.exp(a_h) / (np.exp(a_h) + np.exp(a_a))
+    return home if rng.random() < p_home else away
