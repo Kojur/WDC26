@@ -23,3 +23,16 @@ def test_vec_tau_matches_scalar():
     vec = _vec_tau(x, y, lam, mu, -0.05)
     scalar = np.array([dc_tau(a, b, 1.5, 1.1, -0.05) for a, b in zip(x, y)])
     np.testing.assert_allclose(vec, scalar)
+
+
+def test_fit_recovers_strength_ordering(fitted_model):
+    m = fitted_model
+    i_strong = m.team_index["Strong"]
+    i_weak = m.team_index["Weak"]
+    assert m.attack[i_strong] > m.attack[i_weak]
+    assert abs(m.attack.mean()) < 1e-6  # identifiability: mean attack == 0
+    assert isinstance(m.home_adv, float)
+
+
+def test_fit_sets_all_teams(fitted_model):
+    assert set(fitted_model.teams) == {"Strong", "Medium", "Weak"}
