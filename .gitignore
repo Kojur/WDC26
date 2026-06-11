@@ -17,3 +17,6 @@ data/processed/
 .DS_Store
 .vscode/
 .idea/
+
+# Claude Code local session config
+.claude/
