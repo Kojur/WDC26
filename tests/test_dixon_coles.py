@@ -36,3 +36,25 @@ def test_fit_recovers_strength_ordering(fitted_model):
 
 def test_fit_sets_all_teams(fitted_model):
     assert set(fitted_model.teams) == {"Strong", "Medium", "Weak"}
+
+
+def test_score_matrix_sums_to_one(fitted_model):
+    mat = fitted_model.score_matrix("Strong", "Weak", neutral=True)
+    assert mat.shape == (11, 11)
+    np.testing.assert_allclose(mat.sum(), 1.0, atol=1e-9)
+
+
+def test_predict_result_sums_to_one_and_favors_strong(fitted_model):
+    p = fitted_model.predict_result("Strong", "Weak", neutral=True)
+    np.testing.assert_allclose(p["home_win"] + p["draw"] + p["away_win"], 1.0, atol=1e-9)
+    assert p["home_win"] > p["away_win"]
+
+
+def test_expected_goals_higher_for_strong(fitted_model):
+    lam, mu = fitted_model.expected_goals("Strong", "Weak", neutral=True)
+    assert lam > mu
+
+
+def test_unseen_team_uses_fallback(fitted_model):
+    lam, mu = fitted_model.expected_goals("Strong", "Atlantis", neutral=True)
+    assert lam > 0 and mu > 0  # no KeyError; fallback applied
