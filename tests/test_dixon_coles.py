@@ -58,3 +58,25 @@ def test_expected_goals_higher_for_strong(fitted_model):
 def test_unseen_team_uses_fallback(fitted_model):
     lam, mu = fitted_model.expected_goals("Strong", "Atlantis", neutral=True)
     assert lam > 0 and mu > 0  # no KeyError; fallback applied
+
+
+def test_sample_scoreline_reproducible_with_seed(fitted_model):
+    rng1 = np.random.default_rng(42)
+    rng2 = np.random.default_rng(42)
+    s1 = [fitted_model.sample_scoreline("Strong", "Weak", rng1) for _ in range(20)]
+    s2 = [fitted_model.sample_scoreline("Strong", "Weak", rng2) for _ in range(20)]
+    assert s1 == s2
+
+
+def test_sample_scoreline_returns_goal_pair(fitted_model):
+    rng = np.random.default_rng(0)
+    hg, ag = fitted_model.sample_scoreline("Strong", "Weak", rng)
+    assert 0 <= hg <= fitted_model.max_goals
+    assert 0 <= ag <= fitted_model.max_goals
+
+
+def test_sampled_mean_favors_strong(fitted_model):
+    rng = np.random.default_rng(1)
+    diffs = [hg - ag for hg, ag in
+             (fitted_model.sample_scoreline("Strong", "Weak", rng) for _ in range(2000))]
+    assert np.mean(diffs) > 0
