@@ -16,7 +16,7 @@ export function TitleOddsChart({ topN = 12 }: { topN?: number }) {
                tick={{ fontSize: 13 }} />
         <Bar dataKey="pct" radius={[2, 2, 2, 2]}>
           {data.map((_, i) => <Cell key={i} fill="#1a7f5a" />)}
-          <LabelList dataKey="pct" position="right" formatter={(v: number) => `${v}%`}
+          <LabelList dataKey="pct" position="right" formatter={(v: unknown) => `${v}%`}
                      style={{ fontSize: 12, fill: "#444" }} />
         </Bar>
       </BarChart>
