@@ -1,5 +1,7 @@
 # WDC26 — World Cup 2026 Scoreline & Result Prediction
 
+**🔗 Live showcase: https://kojur.github.io/WDC26/**
+
 A Dixon-Coles goals model that predicts football scoreline probabilities, backtested
 against past World Cups and used to Monte-Carlo-simulate the 2026 tournament.
 
