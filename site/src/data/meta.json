@@ -1,0 +1,34 @@
+{
+  "dataset": {
+    "n_matches": 49405,
+    "n_teams": 326,
+    "date_min": "1872-11-30",
+    "date_max": "2026-06-10"
+  },
+  "ratings_sanity": {
+    "fifa_rank_corr": -0.916,
+    "n_matched": 191
+  },
+  "backtest": {
+    "wc_years": [
+      2018,
+      2022
+    ],
+    "n_matches": 128,
+    "model": {
+      "rps": 0.2165,
+      "log_loss": 1.0155,
+      "accuracy": 0.5391
+    },
+    "baseline": {
+      "rps": 0.2443,
+      "log_loss": 1.0843,
+      "accuracy": 0.4141
+    },
+    "best_xi": 0.0019
+  },
+  "model": {
+    "home_adv": 0.284,
+    "rho": -0.139
+  }
+}

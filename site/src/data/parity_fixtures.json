@@ -1,0 +1,42 @@
+[
+  {
+    "home": "Brazil",
+    "away": "Croatia",
+    "neutral": true,
+    "home_win": 0.69755149395206,
+    "draw": 0.2183881551933763,
+    "away_win": 0.08406035085456379
+  },
+  {
+    "home": "Argentina",
+    "away": "Mexico",
+    "neutral": true,
+    "home_win": 0.5537671137951413,
+    "draw": 0.28402586849226485,
+    "away_win": 0.16220701771259388
+  },
+  {
+    "home": "Spain",
+    "away": "Uruguay",
+    "neutral": true,
+    "home_win": 0.37379165888247357,
+    "draw": 0.3230364161827596,
+    "away_win": 0.3031719249347667
+  },
+  {
+    "home": "France",
+    "away": "Norway",
+    "neutral": true,
+    "home_win": 0.6175747222663888,
+    "draw": 0.2568515388380917,
+    "away_win": 0.12557373889551926
+  },
+  {
+    "home": "Germany",
+    "away": "Ecuador",
+    "neutral": true,
+    "home_win": 0.3029863600866496,
+    "draw": 0.29678769363246676,
+    "away_win": 0.4002259462808839
+  }
+]
