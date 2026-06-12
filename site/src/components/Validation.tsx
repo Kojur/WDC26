@@ -22,8 +22,10 @@ export function Validation() {
         </tbody>
       </table>
       <p>
-        As a sanity check, the model's learned strength correlates {M.ratings_sanity.fifa_rank_corr}
-        with the official FIFA ranking — without ever being shown it.
+        As a sanity check, the teams the model rates highest line up almost perfectly with the
+        official FIFA ranking — a strong inverse correlation of {M.ratings_sanity.fifa_rank_corr}{" "}
+        (higher-rated teams hold lower, i.e. better, rank numbers) — and it was never shown those
+        rankings.
       </p>
     </section>
   );

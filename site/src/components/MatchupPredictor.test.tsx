@@ -15,7 +15,7 @@ describe("MatchupPredictor", () => {
   it("updates when the away team changes", () => {
     render(<MatchupPredictor />);
     const before = screen.getByTestId("wdl-odds").textContent;
-    const away = screen.getByLabelText("Away team") as HTMLSelectElement;
+    const away = screen.getByLabelText("Team 2") as HTMLSelectElement;
     const other = Array.from(away.options).find((o) => o.value !== away.value)!;
     fireEvent.change(away, { target: { value: other.value } });
     expect(screen.getByTestId("wdl-odds").textContent).not.toEqual(before);

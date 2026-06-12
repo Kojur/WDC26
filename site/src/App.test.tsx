@@ -6,6 +6,6 @@ describe("App", () => {
   it("renders the hero and the matchup predictor", () => {
     render(<App />);
     expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(/2026 World Cup/i);
-    expect(screen.getByLabelText("Home team")).toBeInTheDocument();
+    expect(screen.getByLabelText("Team 1")).toBeInTheDocument();
   });
 });

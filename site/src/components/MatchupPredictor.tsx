@@ -22,18 +22,22 @@ export function MatchupPredictor() {
     <div>
       <div style={{ display: "flex", gap: 16, flexWrap: "wrap", marginBottom: 20 }}>
         <label style={{ display: "flex", flexDirection: "column", fontSize: 13 }}>
-          Home team
-          <select aria-label="Home team" value={home} onChange={(e) => setHome(e.target.value)}>
+          Team 1
+          <select aria-label="Team 1" value={home} onChange={(e) => setHome(e.target.value)}>
             {TEAMS.map((t) => <option key={t} value={t}>{t}</option>)}
           </select>
         </label>
         <label style={{ display: "flex", flexDirection: "column", fontSize: 13 }}>
-          Away team
-          <select aria-label="Away team" value={away} onChange={(e) => setAway(e.target.value)}>
+          Team 2
+          <select aria-label="Team 2" value={away} onChange={(e) => setAway(e.target.value)}>
             {TEAMS.map((t) => <option key={t} value={t}>{t}</option>)}
           </select>
         </label>
       </div>
+
+      <p style={{ fontSize: 12, color: "#888", margin: "0 0 16px" }}>
+        Modelled at a neutral venue (no home advantage), as at a World Cup.
+      </p>
 
       <div data-testid="wdl-odds" style={{ display: "flex", gap: 20, marginBottom: 8, fontSize: 16 }}>
         <span><strong>{pct(result.homeWin)}%</strong> {home}</span>
