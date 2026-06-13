@@ -1,6 +1,8 @@
 """Proper scoring rules, baselines, calibration, and walk-forward backtesting."""
 import numpy as np
 import pandas as pd
+from src.calibrate import calibrate
+from src.data import latest_points
 
 
 def result_outcome(home_goals, away_goals):
@@ -64,7 +66,8 @@ def calibration_curve(home_probs, home_won, n_bins=10):
     return np.array(centers), np.array(freqs)
 
 
-def walk_forward_worldcups(matches, wc_years, model_factory, xi):
+def walk_forward_worldcups(matches, wc_years, model_factory, xi,
+                           fifa_rankings=None, alpha=1.0):
     """Train on all matches before each World Cup year; predict that tournament.
 
     Returns (pred_probs, outcomes) as parallel lists across all predicted matches.
@@ -78,6 +81,9 @@ def walk_forward_worldcups(matches, wc_years, model_factory, xi):
         if len(train) == 0 or len(test) == 0:
             continue
         model = model_factory().fit(train, xi=xi, ref_date=cutoff)
+        if fifa_rankings is not None and alpha < 1.0:
+            points = latest_points(fifa_rankings, as_of=cutoff)
+            model = calibrate(model, points, alpha)
         for _, row in test.iterrows():
             d = model.predict_result(row["home_team"], row["away_team"],
                                      neutral=bool(row["neutral"]))

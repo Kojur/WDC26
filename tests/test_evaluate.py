@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 from src.evaluate import result_outcome, rps, log_loss, evaluate
 from src.evaluate import (base_rate_probs, rank_baseline_probs,
                           calibration_curve, walk_forward_worldcups)
@@ -60,3 +61,32 @@ def test_walk_forward_runs(synthetic_matches):
         m, wc_years=[2015], model_factory=DixonColesModel, xi=0.0)
     assert len(preds) == len(outs) > 0
     assert all(abs(sum(p) - 1.0) < 1e-6 for p in preds)
+
+
+def _fifa_fixture():
+    return pd.DataFrame({
+        "rank_date": pd.to_datetime(["2014-01-01"] * 3),
+        "country_full": ["Strong", "Medium", "Weak"],
+        "total_points": [1500.0, 1300.0, 1100.0],
+    })
+
+
+def test_walk_forward_calibrated_runs(synthetic_matches):
+    m = synthetic_matches.copy()
+    m.loc[m["date"].dt.year == 2015, "tournament"] = "FIFA World Cup"
+    preds, outs = walk_forward_worldcups(
+        m, wc_years=[2015], model_factory=DixonColesModel, xi=0.0,
+        fifa_rankings=_fifa_fixture(), alpha=0.5)
+    assert len(preds) == len(outs) > 0
+    assert all(abs(sum(p) - 1.0) < 1e-6 for p in preds)
+
+
+def test_walk_forward_alpha_one_matches_uncalibrated(synthetic_matches):
+    m = synthetic_matches.copy()
+    m.loc[m["date"].dt.year == 2015, "tournament"] = "FIFA World Cup"
+    base, _ = walk_forward_worldcups(
+        m, wc_years=[2015], model_factory=DixonColesModel, xi=0.0)
+    same, _ = walk_forward_worldcups(
+        m, wc_years=[2015], model_factory=DixonColesModel, xi=0.0,
+        fifa_rankings=_fifa_fixture(), alpha=1.0)
+    np.testing.assert_allclose(base, same, atol=1e-9)
