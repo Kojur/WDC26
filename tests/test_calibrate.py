@@ -1,4 +1,5 @@
 import numpy as np
+import pytest
 from src.calibrate import calibrate
 
 
@@ -45,6 +46,12 @@ def test_does_not_mutate_original(fitted_model):
 
 
 def test_rejects_alpha_out_of_range(fitted_model):
-    import pytest
     with pytest.raises(ValueError):
         calibrate(fitted_model, {"Strong": 1.0}, alpha=1.5)
+
+
+def test_too_few_reference_teams_returns_unchanged(fitted_model):
+    # only one model team has a FIFA entry -> nothing to calibrate against
+    cal = calibrate(fitted_model, {"Strong": 1000.0}, alpha=0.3)
+    np.testing.assert_array_equal(cal.attack, fitted_model.attack)
+    np.testing.assert_array_equal(cal.defense, fitted_model.defense)

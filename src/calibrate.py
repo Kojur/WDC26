@@ -36,6 +36,7 @@ def calibrate(model, fifa_points, alpha):
     z_final = alpha * z_model + (1.0 - alpha) * z_fifa
     net_final = net_mean + net_std * z_final
     delta = net_final - net
+    # split each net-strength change evenly: half as more attack, half as less conceding
     for t, d in zip(ref, delta):
         i = idx[t]
         cal.attack[i] += d / 2.0
