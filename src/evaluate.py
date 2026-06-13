@@ -90,3 +90,28 @@ def walk_forward_worldcups(matches, wc_years, model_factory, xi,
             preds.append([d["home_win"], d["draw"], d["away_win"]])
             outs.append(result_outcome(row["home_score"], row["away_score"]))
     return preds, outs
+
+
+def alpha_backtest_curve(matches, wc_years, model_factory, xi,
+                         fifa_rankings, alphas):
+    """Walk-forward backtest at each alpha; return list of {alpha, log_loss, rps}.
+
+    Note: re-fits the model per (alpha, world-cup-year); for the production grid
+    (11 alphas x 2 cups) this is a few minutes offline.
+    """
+    out = []
+    for a in alphas:
+        preds, outs = walk_forward_worldcups(
+            matches, wc_years, model_factory, xi,
+            fifa_rankings=fifa_rankings, alpha=a)
+        m = evaluate(preds, outs)
+        out.append({"alpha": float(a), "log_loss": m["log_loss"], "rps": m["rps"]})
+    return out
+
+
+def choose_alpha(curve, tol=0.0):
+    """Pick alpha minimizing log-loss; within `tol` of the best, prefer smaller
+    alpha (more FIFA correction). RPS breaks remaining ties."""
+    best = min(c["log_loss"] for c in curve)
+    band = [c for c in curve if c["log_loss"] <= best + tol]
+    return min(band, key=lambda c: (c["alpha"], c["rps"]))["alpha"]

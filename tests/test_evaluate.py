@@ -94,3 +94,31 @@ def test_walk_forward_alpha_one_matches_uncalibrated(synthetic_matches):
         m, wc_years=[2015], model_factory=DixonColesModel, xi=0.0,
         fifa_rankings=_fifa_fixture(), alpha=1.0)
     np.testing.assert_allclose(base, same, atol=1e-9)
+
+
+def test_alpha_backtest_curve_shape(synthetic_matches):
+    from src.evaluate import alpha_backtest_curve
+    m = synthetic_matches.copy()
+    m.loc[m["date"].dt.year == 2015, "tournament"] = "FIFA World Cup"
+    curve = alpha_backtest_curve(
+        m, wc_years=[2015], model_factory=DixonColesModel, xi=0.0,
+        fifa_rankings=_fifa_fixture(), alphas=[0.5, 1.0])
+    assert [c["alpha"] for c in curve] == [0.5, 1.0]
+    assert all({"alpha", "log_loss", "rps"} <= set(c) for c in curve)
+
+
+def test_choose_alpha_picks_min_log_loss():
+    from src.evaluate import choose_alpha
+    curve = [{"alpha": 0.0, "log_loss": 1.10, "rps": 0.25},
+             {"alpha": 0.5, "log_loss": 1.00, "rps": 0.21},
+             {"alpha": 1.0, "log_loss": 1.05, "rps": 0.23}]
+    assert choose_alpha(curve, tol=0.0) == 0.5
+
+
+def test_choose_alpha_tie_prefers_more_fifa():
+    from src.evaluate import choose_alpha
+    # 0.3 and 0.6 are within tol of the best (1.00); prefer the smaller alpha
+    curve = [{"alpha": 0.3, "log_loss": 1.004, "rps": 0.210},
+             {"alpha": 0.6, "log_loss": 1.000, "rps": 0.210},
+             {"alpha": 1.0, "log_loss": 1.090, "rps": 0.230}]
+    assert choose_alpha(curve, tol=0.01) == 0.3
