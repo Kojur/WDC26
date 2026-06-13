@@ -35,3 +35,21 @@ def test_parity_payload(fitted_model):
     assert c["home"] == "Strong" and c["away"] == "Weak" and c["neutral"] is True
     assert abs(c["home_win"] + c["draw"] + c["away_win"] - 1.0) < 1e-9
     assert c["home_win"] > c["away_win"]
+
+
+def test_calibration_payload_shape():
+    import pandas as pd
+    from scripts.export_site_data import calibration_payload
+    before = pd.DataFrame([{"team": "Brazil", "p_champion": 0.28},
+                           {"team": "Colombia", "p_champion": 0.11}])
+    after = pd.DataFrame([{"team": "Argentina", "p_champion": 0.21},
+                          {"team": "France", "p_champion": 0.09}])
+    curve = [{"alpha": 0.0, "log_loss": 1.10, "rps": 0.25},
+             {"alpha": 0.5, "log_loss": 1.00, "rps": 0.21}]
+    p = calibration_payload(0.5, curve, "2024-06-20", before, after, top_n=2)
+    assert p["prior"] == "fifa_total_points"
+    assert p["alpha"] == 0.5 and p["fifa_as_of"] == "2024-06-20"
+    assert p["alpha_curve"][0] == {"alpha": 0.0, "log_loss": 1.1, "rps": 0.25}
+    assert p["before_top12"][0] == {"team": "Brazil", "p_champion": 0.28}
+    assert p["after_top12"][0] == {"team": "Argentina", "p_champion": 0.21}
+    assert len(p["before_top12"]) == 2

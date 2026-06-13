@@ -116,6 +116,20 @@ def test_choose_alpha_picks_min_log_loss():
     assert choose_alpha(curve, tol=0.0) == 0.5
 
 
+def test_alpha_backtest_curve_matches_naive(synthetic_matches):
+    from src.evaluate import alpha_backtest_curve, walk_forward_worldcups, evaluate
+    m = synthetic_matches.copy()
+    m.loc[m["date"].dt.year == 2015, "tournament"] = "FIFA World Cup"
+    fifa = _fifa_fixture()
+    curve = alpha_backtest_curve(m, [2015], DixonColesModel, 0.0, fifa, [0.5, 1.0])
+    for a, c in zip([0.5, 1.0], curve):
+        preds, outs = walk_forward_worldcups(m, [2015], DixonColesModel, 0.0,
+                                             fifa_rankings=fifa, alpha=a)
+        ev = evaluate(preds, outs)
+        assert abs(c["log_loss"] - ev["log_loss"]) < 1e-9
+        assert abs(c["rps"] - ev["rps"]) < 1e-9
+
+
 def test_choose_alpha_tie_prefers_more_fifa():
     from src.evaluate import choose_alpha
     # 0.3 and 0.6 are within tol of the best (1.00); prefer the smaller alpha
