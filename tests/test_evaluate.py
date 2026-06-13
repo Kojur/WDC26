@@ -105,6 +105,7 @@ def test_alpha_backtest_curve_shape(synthetic_matches):
         fifa_rankings=_fifa_fixture(), alphas=[0.5, 1.0])
     assert [c["alpha"] for c in curve] == [0.5, 1.0]
     assert all({"alpha", "log_loss", "rps"} <= set(c) for c in curve)
+    assert all(c["log_loss"] > 0 and 0 <= c["rps"] <= 1 for c in curve)
 
 
 def test_choose_alpha_picks_min_log_loss():

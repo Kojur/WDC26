@@ -110,8 +110,14 @@ def alpha_backtest_curve(matches, wc_years, model_factory, xi,
 
 
 def choose_alpha(curve, tol=0.0):
-    """Pick alpha minimizing log-loss; within `tol` of the best, prefer smaller
-    alpha (more FIFA correction). RPS breaks remaining ties."""
+    """Pick alpha minimizing log-loss; among alphas within `tol` of the best (a
+    statistically indifferent band), prefer the smaller alpha (more FIFA
+    correction). The (alpha, rps) key is lexicographic, so alpha dominates: RPS
+    only differentiates identical alpha values, which a normal distinct-alpha
+    grid never produces. Net rule: smallest alpha in the indifferent band.
+    """
+    if not curve:
+        raise ValueError("curve must be non-empty")
     best = min(c["log_loss"] for c in curve)
     band = [c for c in curve if c["log_loss"] <= best + tol]
     return min(band, key=lambda c: (c["alpha"], c["rps"]))["alpha"]
