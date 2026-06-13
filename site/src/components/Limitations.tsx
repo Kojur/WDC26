@@ -8,7 +8,7 @@ export function Limitations() {
         them, so the regions never get anchored against one another. We correct this by
         blending each team's strength toward the FIFA ranking — but that borrows FIFA's own
         quirks too (a little ranking inertia for fading sides), and the FIFA snapshot we use
-        is a couple of years old.
+        is from mid-2024, so it lags current form.
       </p>
       <p>
         It also can't see what isn't in the scoreline data: injuries, squad turnover, form, or
