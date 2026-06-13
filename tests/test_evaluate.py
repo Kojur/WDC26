@@ -104,7 +104,7 @@ def test_alpha_backtest_curve_shape(synthetic_matches):
         m, wc_years=[2015], model_factory=DixonColesModel, xi=0.0,
         fifa_rankings=_fifa_fixture(), alphas=[0.5, 1.0])
     assert [c["alpha"] for c in curve] == [0.5, 1.0]
-    assert all({"alpha", "log_loss", "rps"} <= set(c) for c in curve)
+    assert all({"alpha", "log_loss", "rps", "accuracy"} <= set(c) for c in curve)
     assert all(c["log_loss"] > 0 and 0 <= c["rps"] <= 1 for c in curve)
 
 

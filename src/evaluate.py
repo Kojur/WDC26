@@ -124,7 +124,7 @@ def alpha_backtest_curve(matches, wc_years, model_factory, xi,
                 outs.append(result_outcome(row["home_score"], row["away_score"]))
         metrics = evaluate(preds, outs)
         out.append({"alpha": float(a), "log_loss": metrics["log_loss"],
-                    "rps": metrics["rps"]})
+                    "rps": metrics["rps"], "accuracy": metrics["accuracy"]})
     return out
 
 

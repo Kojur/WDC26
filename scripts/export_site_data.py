@@ -11,7 +11,7 @@ sys.path.insert(0, str(REPO))
 
 from src.data import load_results, clean_results, load_rankings, latest_rankings, latest_points
 from src.calibrate import calibrate
-from src.evaluate import (walk_forward_worldcups, evaluate, base_rate_probs,
+from src.evaluate import (evaluate, base_rate_probs,
                           result_outcome, alpha_backtest_curve, choose_alpha)
 from src.dixon_coles import DixonColesModel
 from src.simulate import monte_carlo
@@ -55,7 +55,7 @@ def parity_payload(model, pairs):
     return out
 
 
-def meta_payload(matches, model, rankings, alpha):
+def meta_payload(matches, model, rankings, alpha, curve):
     teams = list(model.teams)
     net = {t: float(model.attack[i] - model.defense[i]) for i, t in enumerate(teams)}
     ranks = latest_rankings(rankings)
@@ -63,9 +63,14 @@ def meta_payload(matches, model, rankings, alpha):
                        "rank": [ranks.get(t, np.nan) for t in teams]}).dropna()
     corr = float(rr["net"].corr(rr["rank"]))
     wc_years = [2018, 2022]
-    preds, outs = walk_forward_worldcups(matches, wc_years, DixonColesModel, xi=0.0019,
-                                         fifa_rankings=rankings, alpha=alpha)
-    model_metrics = evaluate(preds, outs)
+    # Backtest outcomes need no model fit -- they are just the actual WC results.
+    test = matches[(matches.tournament == "FIFA World Cup")
+                   & (matches.date.dt.year.isin(wc_years))]
+    outs = [result_outcome(r.home_score, r.away_score) for r in test.itertuples()]
+    # Calibrated-model metrics are read from the precomputed alpha curve (no refit).
+    entry = next(c for c in curve if abs(c["alpha"] - alpha) < 1e-9)
+    model_metrics = {"rps": entry["rps"], "log_loss": entry["log_loss"],
+                     "accuracy": entry["accuracy"]}
     train_out = [result_outcome(r.home_score, r.away_score)
                  for r in matches[matches.date < "2018-01-01"].itertuples()]
     base = base_rate_probs(train_out)
@@ -126,7 +131,9 @@ def main():
     fit = {"min_date": "2010-01-01", "xi": 0.0019, "n_matches": int(len(fit_df))}
     _write(OUT / "ratings.json", ratings_payload(cal, fit))
 
-    before = monte_carlo(GROUPS, model, n_sims=10000, seed=2026)
+    # 'after' (calibrated) is the published 10k result; 'before' uses fewer sims
+    # because it only feeds the illustrative before/after comparison table.
+    before = monte_carlo(GROUPS, model, n_sims=2000, seed=2026)
     after = monte_carlo(GROUPS, cal, n_sims=10000, seed=2026)
     _write(OUT / "simulation.json", simulation_payload(after, 10000, 2026))
     _write(OUT / "groups.json", groups_payload(GROUPS))
@@ -134,7 +141,7 @@ def main():
              ("France", "Norway"), ("Germany", "Ecuador")]
     _write(OUT / "parity_fixtures.json", parity_payload(cal, pairs))
 
-    meta = meta_payload(matches, model, rankings, alpha)
+    meta = meta_payload(matches, model, rankings, alpha, curve)
     meta["calibration"] = calibration_payload(alpha, curve, fifa_as_of, before, after)
     _write(OUT / "meta.json", meta)
     print("done")
