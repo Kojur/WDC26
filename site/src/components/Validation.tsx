@@ -22,10 +22,13 @@ export function Validation() {
         </tbody>
       </table>
       <p>
-        As a sanity check, the teams the model rates highest line up almost perfectly with the
-        official FIFA ranking — a strong inverse correlation of {M.ratings_sanity.fifa_rank_corr}{" "}
-        (higher-rated teams hold lower, i.e. better, rank numbers) — and it was never shown those
-        rankings.
+        The raw, results-only ratings already line up strongly with the official FIFA
+        ranking — an inverse correlation of {M.ratings_sanity.fifa_rank_corr} (higher-rated
+        teams hold lower, i.e. better, rank numbers). We then apply a light FIFA calibration
+        (blend weight {M.backtest.alpha}) to fix a known top-end bias: a results-only model
+        over-rates South American teams, who play a dense schedule among themselves. The
+        backtest numbers above are measured <em>with</em> that calibration applied — and it
+        improves them.
       </p>
     </section>
   );

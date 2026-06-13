@@ -13,8 +13,16 @@ export function HowItWorks() {
         of that grid gives the chance of a win, draw, or loss.
       </p>
       <p>
-        To predict the whole tournament, we simulate all 104 matches — group stage through final
-        — <strong>ten thousand times</strong>, and count how often each team lifts the trophy.
+        One adjustment first: a model trained only on results over-rates regions that
+        mostly play among themselves — South America especially. So we gently calibrate
+        each team's strength toward the FIFA ranking, by a blend weight chosen on the
+        backtest, before simulating. The data still does the heavy lifting; FIFA just
+        anchors the regions to each other.
+      </p>
+      <p>
+        To predict the whole tournament, we simulate all 104 matches — group stage through
+        final — <strong>ten thousand times</strong>, and count how often each team lifts
+        the trophy.
       </p>
     </section>
   );
