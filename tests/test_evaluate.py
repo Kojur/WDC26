@@ -74,11 +74,15 @@ def _fifa_fixture():
 def test_walk_forward_calibrated_runs(synthetic_matches):
     m = synthetic_matches.copy()
     m.loc[m["date"].dt.year == 2015, "tournament"] = "FIFA World Cup"
+    base, _ = walk_forward_worldcups(
+        m, wc_years=[2015], model_factory=DixonColesModel, xi=0.0)
     preds, outs = walk_forward_worldcups(
         m, wc_years=[2015], model_factory=DixonColesModel, xi=0.0,
         fifa_rankings=_fifa_fixture(), alpha=0.5)
     assert len(preds) == len(outs) > 0
     assert all(abs(sum(p) - 1.0) < 1e-6 for p in preds)
+    # calibration must actually move the predictions (FIFA fixture inverts the model order)
+    assert not np.allclose(np.array(preds), np.array(base))
 
 
 def test_walk_forward_alpha_one_matches_uncalibrated(synthetic_matches):
