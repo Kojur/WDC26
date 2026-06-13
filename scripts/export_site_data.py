@@ -87,8 +87,9 @@ def meta_payload(matches, model, rankings, alpha):
 
 def calibration_payload(alpha, curve, fifa_as_of, before_probs, after_probs, top_n=12):
     def top(df):
+        ordered = df.sort_values("p_champion", ascending=False)
         return [{"team": r["team"], "p_champion": round(float(r["p_champion"]), 4)}
-                for _, r in df.head(top_n).iterrows()]
+                for _, r in ordered.head(top_n).iterrows()]
     return {
         "prior": "fifa_total_points",
         "fifa_as_of": fifa_as_of,
