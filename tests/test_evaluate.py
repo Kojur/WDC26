@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 from src.evaluate import result_outcome, rps, log_loss, evaluate
 from src.evaluate import (base_rate_probs, rank_baseline_probs,
                           calibration_curve, walk_forward_worldcups)
@@ -60,3 +61,79 @@ def test_walk_forward_runs(synthetic_matches):
         m, wc_years=[2015], model_factory=DixonColesModel, xi=0.0)
     assert len(preds) == len(outs) > 0
     assert all(abs(sum(p) - 1.0) < 1e-6 for p in preds)
+
+
+def _fifa_fixture():
+    return pd.DataFrame({
+        "rank_date": pd.to_datetime(["2014-01-01"] * 3),
+        "country_full": ["Strong", "Medium", "Weak"],
+        "total_points": [1500.0, 1300.0, 1100.0],
+    })
+
+
+def test_walk_forward_calibrated_runs(synthetic_matches):
+    m = synthetic_matches.copy()
+    m.loc[m["date"].dt.year == 2015, "tournament"] = "FIFA World Cup"
+    base, _ = walk_forward_worldcups(
+        m, wc_years=[2015], model_factory=DixonColesModel, xi=0.0)
+    preds, outs = walk_forward_worldcups(
+        m, wc_years=[2015], model_factory=DixonColesModel, xi=0.0,
+        fifa_rankings=_fifa_fixture(), alpha=0.5)
+    assert len(preds) == len(outs) > 0
+    assert all(abs(sum(p) - 1.0) < 1e-6 for p in preds)
+    # calibration must actually move the predictions (FIFA fixture inverts the model order)
+    assert not np.allclose(np.array(preds), np.array(base))
+
+
+def test_walk_forward_alpha_one_matches_uncalibrated(synthetic_matches):
+    m = synthetic_matches.copy()
+    m.loc[m["date"].dt.year == 2015, "tournament"] = "FIFA World Cup"
+    base, _ = walk_forward_worldcups(
+        m, wc_years=[2015], model_factory=DixonColesModel, xi=0.0)
+    same, _ = walk_forward_worldcups(
+        m, wc_years=[2015], model_factory=DixonColesModel, xi=0.0,
+        fifa_rankings=_fifa_fixture(), alpha=1.0)
+    np.testing.assert_allclose(base, same, atol=1e-9)
+
+
+def test_alpha_backtest_curve_shape(synthetic_matches):
+    from src.evaluate import alpha_backtest_curve
+    m = synthetic_matches.copy()
+    m.loc[m["date"].dt.year == 2015, "tournament"] = "FIFA World Cup"
+    curve = alpha_backtest_curve(
+        m, wc_years=[2015], model_factory=DixonColesModel, xi=0.0,
+        fifa_rankings=_fifa_fixture(), alphas=[0.5, 1.0])
+    assert [c["alpha"] for c in curve] == [0.5, 1.0]
+    assert all({"alpha", "log_loss", "rps", "accuracy"} <= set(c) for c in curve)
+    assert all(c["log_loss"] > 0 and 0 <= c["rps"] <= 1 for c in curve)
+
+
+def test_choose_alpha_picks_min_log_loss():
+    from src.evaluate import choose_alpha
+    curve = [{"alpha": 0.0, "log_loss": 1.10, "rps": 0.25},
+             {"alpha": 0.5, "log_loss": 1.00, "rps": 0.21},
+             {"alpha": 1.0, "log_loss": 1.05, "rps": 0.23}]
+    assert choose_alpha(curve, tol=0.0) == 0.5
+
+
+def test_alpha_backtest_curve_matches_naive(synthetic_matches):
+    from src.evaluate import alpha_backtest_curve, walk_forward_worldcups, evaluate
+    m = synthetic_matches.copy()
+    m.loc[m["date"].dt.year == 2015, "tournament"] = "FIFA World Cup"
+    fifa = _fifa_fixture()
+    curve = alpha_backtest_curve(m, [2015], DixonColesModel, 0.0, fifa, [0.5, 1.0])
+    for a, c in zip([0.5, 1.0], curve):
+        preds, outs = walk_forward_worldcups(m, [2015], DixonColesModel, 0.0,
+                                             fifa_rankings=fifa, alpha=a)
+        ev = evaluate(preds, outs)
+        assert abs(c["log_loss"] - ev["log_loss"]) < 1e-9
+        assert abs(c["rps"] - ev["rps"]) < 1e-9
+
+
+def test_choose_alpha_tie_prefers_more_fifa():
+    from src.evaluate import choose_alpha
+    # 0.3 and 0.6 are within tol of the best (1.00); prefer the smaller alpha
+    curve = [{"alpha": 0.3, "log_loss": 1.004, "rps": 0.210},
+             {"alpha": 0.6, "log_loss": 1.000, "rps": 0.210},
+             {"alpha": 1.0, "log_loss": 1.090, "rps": 0.230}]
+    assert choose_alpha(curve, tol=0.01) == 0.3

@@ -1,6 +1,8 @@
 """Proper scoring rules, baselines, calibration, and walk-forward backtesting."""
 import numpy as np
 import pandas as pd
+from src.calibrate import calibrate
+from src.data import latest_points
 
 
 def result_outcome(home_goals, away_goals):
@@ -64,7 +66,8 @@ def calibration_curve(home_probs, home_won, n_bins=10):
     return np.array(centers), np.array(freqs)
 
 
-def walk_forward_worldcups(matches, wc_years, model_factory, xi):
+def walk_forward_worldcups(matches, wc_years, model_factory, xi,
+                           fifa_rankings=None, alpha=1.0):
     """Train on all matches before each World Cup year; predict that tournament.
 
     Returns (pred_probs, outcomes) as parallel lists across all predicted matches.
@@ -78,9 +81,62 @@ def walk_forward_worldcups(matches, wc_years, model_factory, xi):
         if len(train) == 0 or len(test) == 0:
             continue
         model = model_factory().fit(train, xi=xi, ref_date=cutoff)
+        if fifa_rankings is not None and alpha < 1.0:
+            points = latest_points(fifa_rankings, as_of=cutoff)
+            model = calibrate(model, points, alpha)
         for _, row in test.iterrows():
             d = model.predict_result(row["home_team"], row["away_team"],
                                      neutral=bool(row["neutral"]))
             preds.append([d["home_win"], d["draw"], d["away_win"]])
             outs.append(result_outcome(row["home_score"], row["away_score"]))
     return preds, outs
+
+
+def alpha_backtest_curve(matches, wc_years, model_factory, xi,
+                         fifa_rankings, alphas):
+    """Walk-forward backtest at each alpha; return list of {alpha, log_loss, rps}.
+
+    Fits one model per World Cup year and reuses it across all alphas (calibration
+    is a cheap, deterministic post-fit transform), so the cost is len(wc_years)
+    fits, not len(alphas) * len(wc_years). The per-alpha prediction loop mirrors
+    walk_forward_worldcups; the duplication buys a ~20x speedup on real data.
+    """
+    fitted = []
+    for year in wc_years:
+        cutoff = pd.Timestamp(year, 1, 1)
+        train = matches[matches["date"] < cutoff]
+        test = matches[(matches["tournament"] == "FIFA World Cup")
+                       & (matches["date"].dt.year == year)]
+        if len(train) == 0 or len(test) == 0:
+            continue
+        model = model_factory().fit(train, xi=xi, ref_date=cutoff)
+        points = latest_points(fifa_rankings, as_of=cutoff)
+        fitted.append((model, points, test))
+    out = []
+    for a in alphas:
+        preds, outs = [], []
+        for model, points, test in fitted:
+            m = model if a >= 1.0 else calibrate(model, points, a)
+            for _, row in test.iterrows():
+                d = m.predict_result(row["home_team"], row["away_team"],
+                                     neutral=bool(row["neutral"]))
+                preds.append([d["home_win"], d["draw"], d["away_win"]])
+                outs.append(result_outcome(row["home_score"], row["away_score"]))
+        metrics = evaluate(preds, outs)
+        out.append({"alpha": float(a), "log_loss": metrics["log_loss"],
+                    "rps": metrics["rps"], "accuracy": metrics["accuracy"]})
+    return out
+
+
+def choose_alpha(curve, tol=0.0):
+    """Pick alpha minimizing log-loss; among alphas within `tol` of the best (a
+    statistically indifferent band), prefer the smaller alpha (more FIFA
+    correction). The (alpha, rps) key is lexicographic, so alpha dominates: RPS
+    only differentiates identical alpha values, which a normal distinct-alpha
+    grid never produces. Net rule: smallest alpha in the indifferent band.
+    """
+    if not curve:
+        raise ValueError("curve must be non-empty")
+    best = min(c["log_loss"] for c in curve)
+    band = [c for c in curve if c["log_loss"] <= best + tol]
+    return min(band, key=lambda c: (c["alpha"], c["rps"]))["alpha"]

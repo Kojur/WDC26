@@ -26,9 +26,15 @@ export interface Meta {
     wc_years: number[]; n_matches: number;
     model: { rps: number; log_loss: number; accuracy: number };
     baseline: { rps: number; log_loss: number; accuracy: number };
-    best_xi: number;
+    best_xi: number; alpha: number;
   };
   model: { home_adv: number; rho: number };
+  calibration?: {
+    prior: string; fifa_as_of: string; alpha: number;
+    alpha_curve: { alpha: number; log_loss: number; rps: number }[];
+    before_top12: { team: string; p_champion: number }[];
+    after_top12: { team: string; p_champion: number }[];
+  };
 }
 
 export interface ParityCase {

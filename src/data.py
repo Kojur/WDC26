@@ -48,3 +48,10 @@ def latest_rankings(rankings, as_of=None):
     df = rankings if as_of is None else rankings[rankings["rank_date"] <= as_of]
     snap = df[df["rank_date"] == df["rank_date"].max()]
     return dict(zip(snap["country_full"], snap["rank"]))
+
+
+def latest_points(rankings, as_of=None):
+    """Return {country: total_points} from the most recent snapshot on/before as_of."""
+    df = rankings if as_of is None else rankings[rankings["rank_date"] <= as_of]
+    snap = df[df["rank_date"] == df["rank_date"].max()]
+    return dict(zip(snap["country_full"], snap["total_points"]))
