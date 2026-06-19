@@ -10,7 +10,10 @@ against past World Cups and used to Monte-Carlo-simulate the 2026 tournament.
 2. Download datasets into `data/raw/` (see `notebooks/01_eda.ipynb`):
    - `results.csv` — international match results
    - `fifa_ranking.csv` — FIFA world rankings (secondary signal)
-3. Run the notebooks in order: `01_eda` → `02_model` → `03_backtest` → `04_simulation`.
+3. (Optional) `python scripts/refresh_fifa_snapshot.py` appends the 11 June 2026
+   pre-tournament FIFA release used for the live 2026 calibration (the Kaggle export
+   ends mid-2024).
+4. Run the notebooks in order: `01_eda` → `02_model` → `03_backtest` → `04_simulation`.
 
 ## Layout
 - `src/` — tested core logic (data, model, evaluation, simulation).
@@ -34,7 +37,7 @@ contenders (Brazil, Argentina, France, Spain, England, …).
 ## Known simplifications
 - A light FIFA-points calibration is blended into the learned ratings (weight tuned on the
   backtest) to correct the closed-pool over-rating of South America. The FIFA snapshot used
-  is from mid-2024, so it lags current form. Cold-start for unseen teams uses the
+  is the June 2026 pre-tournament release. Cold-start for unseen teams uses the
   global-average rating.
 - Knockout seeding is a simplified high-vs-low bracket, not FIFA's exact third-place table.
 - Backtest log-loss/RPS are scored on W/D/L result probabilities (a standard, practical metric).

@@ -6,8 +6,8 @@
     "date_max": "2026-06-10"
   },
   "ratings_sanity": {
-    "fifa_rank_corr": -0.916,
-    "n_matched": 191
+    "fifa_rank_corr": -0.918,
+    "n_matched": 193
   },
   "backtest": {
     "wc_years": [
@@ -34,7 +34,7 @@
   },
   "calibration": {
     "prior": "fifa_total_points",
-    "fifa_as_of": "2024-06-20",
+    "fifa_as_of": "2026-06-11",
     "alpha": 0.4,
     "alpha_curve": [
       {
@@ -146,51 +146,51 @@
     "after_top12": [
       {
         "team": "Argentina",
-        "p_champion": 0.2309
-      },
-      {
-        "team": "Brazil",
-        "p_champion": 0.1771
-      },
-      {
-        "team": "France",
-        "p_champion": 0.1095
-      },
-      {
-        "team": "Belgium",
-        "p_champion": 0.0811
+        "p_champion": 0.2183
       },
       {
         "team": "Spain",
-        "p_champion": 0.0681
+        "p_champion": 0.1595
+      },
+      {
+        "team": "Brazil",
+        "p_champion": 0.1274
+      },
+      {
+        "team": "France",
+        "p_champion": 0.1089
       },
       {
         "team": "England",
-        "p_champion": 0.0636
-      },
-      {
-        "team": "Portugal",
-        "p_champion": 0.0514
-      },
-      {
-        "team": "Netherlands",
-        "p_champion": 0.0393
+        "p_champion": 0.0656
       },
       {
         "team": "Colombia",
-        "p_champion": 0.0382
+        "p_champion": 0.047
       },
       {
-        "team": "Uruguay",
-        "p_champion": 0.0259
+        "team": "Portugal",
+        "p_champion": 0.0451
       },
       {
-        "team": "Croatia",
-        "p_champion": 0.018
+        "team": "Netherlands",
+        "p_champion": 0.0385
+      },
+      {
+        "team": "Belgium",
+        "p_champion": 0.0359
       },
       {
         "team": "Germany",
-        "p_champion": 0.0159
+        "p_champion": 0.031
+      },
+      {
+        "team": "Uruguay",
+        "p_champion": 0.0226
+      },
+      {
+        "team": "Morocco",
+        "p_champion": 0.02
       }
     ]
   }
